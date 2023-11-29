@@ -25,6 +25,20 @@ pipeline {
             }
         }
 
+        stage  ('Setting Environment Variabel'){
+            steps {
+                dir(WORKSPACE_LOCATION) {
+                    sh "rm -rf .env"
+                    script {
+                        params.each {param -> 
+                            echo "${param.key.trim()}=${param.value.trim()}"
+                            sh "echo '${param.key.trim()}=${param.value.trim()}' >> .env"
+                        }
+                    }
+                }
+            } 
+        }
+
         stage ('building docker images') {
             steps {
                 dir(WORKSPACE_LOCATION) {
