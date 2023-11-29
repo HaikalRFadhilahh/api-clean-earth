@@ -7,7 +7,7 @@ pipeline {
     }
 
     stages {
-        stage () {
+        stage ('Configuration Folder Project') {
             steps {
                 dir(WORKSPACE_LOCATION) {
                     checkout scm
