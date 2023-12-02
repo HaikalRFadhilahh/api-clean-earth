@@ -29,9 +29,6 @@ router.post("/login", async (req, res) => {
     where: {
       email: req.body.email,
     },
-    select: {
-      password: false,
-    },
   });
 
   if (checkUsers) {
@@ -143,6 +140,8 @@ router.post("/register", async (req, res) => {
           password: req.body.password,
         },
       });
+
+      delete registerUser.password;
 
       return res.status(200).json({
         status: "success",
