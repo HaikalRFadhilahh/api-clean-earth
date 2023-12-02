@@ -29,6 +29,9 @@ router.post("/login", async (req, res) => {
     where: {
       email: req.body.email,
     },
+    select: {
+      password: false,
+    },
   });
 
   if (checkUsers) {

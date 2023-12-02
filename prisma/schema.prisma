@@ -18,4 +18,15 @@ model users {
   password   String    @db.VarChar(255)
   created_at DateTime? @default(now()) @db.DateTime(0)
   updated_at DateTime? @db.DateTime(0)
+  ulasan     ulasan?
+}
+
+model ulasan {
+  id         Int       @id @default(autoincrement())
+  bintang    Int
+  komentar   String    @db.Text
+  user_id    Int       @unique(map: "user_id")
+  created_at DateTime? @default(now()) @db.DateTime(0)
+  updated_at DateTime? @default(now()) @db.DateTime(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ulasan_ibfk_1")
 }
