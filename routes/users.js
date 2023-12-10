@@ -31,7 +31,6 @@ router.post("/login", async (req, res) => {
   connection.release();
 
   checkUsers = checkUsers[0];
-  console.log(checkUsers);
 
   if (checkUsers) {
     try {
