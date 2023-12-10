@@ -100,22 +100,6 @@ router.post("/register", async (req, res) => {
     });
   }
 
-  // const checkUser = await prisma.users.findFirst({
-  //   where: {
-  //     OR: [
-  //       {
-  //         username: req.body.username,
-  //       },
-  //       {
-  //         email: req.body.email,
-  //       },
-  //       {
-  //         kontak: req.body.kontak,
-  //       },
-  //     ],
-  //   },
-  // });
-
   var [checkUser, fields] = await connection.execute(
     `select * from users where username='${req.body.username}' or email='${req.body.email}' or kontak='${req.body.kontak}'`
   );
@@ -123,6 +107,7 @@ router.post("/register", async (req, res) => {
   checkUser = checkUser[0];
 
   if (checkUser) {
+    connection.release();
     let err;
     if (checkUser.username == req.body.username) {
       err = "Username";
@@ -144,6 +129,7 @@ router.post("/register", async (req, res) => {
         `insert into users (nama,username,email,role,kontak,password) values ('${req.body.nama}','${req.body.username}','${req.body.email}','${req.body.role}','${req.body.kontak}','${req.body.password}')`
       );
 
+      connection.release();
       return res.status(200).json({
         status: "success",
         message: {
@@ -155,6 +141,7 @@ router.post("/register", async (req, res) => {
         },
       });
     } catch (error) {
+      connection.release();
       return res.status(500).json({
         status: "error",
       });
