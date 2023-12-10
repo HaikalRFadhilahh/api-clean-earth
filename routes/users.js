@@ -1,16 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { PrismaClient } = require("@prisma/client");
 const Validator = require("fastest-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
-const prisma = new PrismaClient();
+const pool = require("../database/connection");
 const v = new Validator();
 const { SALT, JWT_SECRET, JWT_ACCESS_TOKEN_EXPIRED } = process.env;
 
 /* Post Request Method */
 router.post("/login", async (req, res) => {
+  const connection = await pool.getConnection();
   const schema = {
     email: "email|empty:false",
     password: "string|empty:false",
@@ -25,11 +24,14 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  const checkUsers = await prisma.users.findFirst({
-    where: {
-      email: req.body.email,
-    },
-  });
+  let [checkUsers, fields] = await connection.execute(
+    `select * from users where email='${req.body.email}'`
+  );
+
+  connection.release();
+
+  checkUsers = checkUsers[0];
+  console.log(checkUsers);
 
   if (checkUsers) {
     try {
@@ -79,6 +81,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
   req.body.role = "user";
+  const connection = await pool.getConnection();
 
   const schema = {
     nama: "string|min:3",
@@ -97,21 +100,27 @@ router.post("/register", async (req, res) => {
     });
   }
 
-  const checkUser = await prisma.users.findFirst({
-    where: {
-      OR: [
-        {
-          username: req.body.username,
-        },
-        {
-          email: req.body.email,
-        },
-        {
-          kontak: req.body.kontak,
-        },
-      ],
-    },
-  });
+  // const checkUser = await prisma.users.findFirst({
+  //   where: {
+  //     OR: [
+  //       {
+  //         username: req.body.username,
+  //       },
+  //       {
+  //         email: req.body.email,
+  //       },
+  //       {
+  //         kontak: req.body.kontak,
+  //       },
+  //     ],
+  //   },
+  // });
+
+  var [checkUser, fields] = await connection.execute(
+    `select * from users where username='${req.body.username}' or email='${req.body.email}' or kontak='${req.body.kontak}'`
+  );
+
+  checkUser = checkUser[0];
 
   if (checkUser) {
     let err;
@@ -130,27 +139,24 @@ router.post("/register", async (req, res) => {
   } else {
     try {
       req.body.password = await bcrypt.hash(req.body.password, parseInt(SALT));
-      const registerUser = await prisma.users.create({
-        data: {
+      console.log(req.body);
+      const [result, fields] = await connection.execute(
+        `insert into users (nama,username,email,role,kontak,password) values ('${req.body.nama}','${req.body.username}','${req.body.email}','${req.body.role}','${req.body.kontak}','${req.body.password}')`
+      );
+
+      return res.status(200).json({
+        status: "success",
+        message: {
           nama: req.body.nama,
           username: req.body.username,
           email: req.body.email,
           role: req.body.role,
           kontak: req.body.kontak,
-          password: req.body.password,
         },
-      });
-
-      delete registerUser.password;
-
-      return res.status(200).json({
-        status: "success",
-        message: registerUser,
       });
     } catch (error) {
       return res.status(500).json({
         status: "error",
-        message: error.error,
       });
     }
   }
