@@ -8,13 +8,13 @@ const v = new Validator();
 router.post("/", async (req, res) => {
   const connection = await pool.getConnection();
   const q = parseInt(req.query.q) || undefined;
+  const limit = parseInt(req.query.limit) || 10;
 
   var query;
   if (q == undefined) {
-    query =
-      "SELECT a.*, b.*, a.created_at AS ulasan_created_at, a.updated_at AS ulasan_updated_at,b.created_at AS user_created_at, b.updated_at AS user_updated_at FROM ulasan a INNER JOIN users b ON a.user_id = b.id ORDER BY a.created_at DESC";
+    query = `SELECT a.*, b.*, a.created_at AS ulasan_created_at, a.updated_at AS ulasan_updated_at,b.created_at AS user_created_at, b.updated_at AS user_updated_at FROM ulasan a INNER JOIN users b ON a.user_id = b.id ORDER BY a.created_at DESC limit ${limit}`;
   } else {
-    query = `SELECT a.*, b.*, a.created_at AS ulasan_created_at, a.updated_at AS ulasan_updated_at,b.created_at AS user_created_at, b.updated_at AS user_updated_at FROM ulasan a INNER JOIN users b ON a.user_id = b.id where a.user_id=${q} ORDER BY a.created_at DESC`;
+    query = `SELECT a.*, b.*, a.created_at AS ulasan_created_at, a.updated_at AS ulasan_updated_at,b.created_at AS user_created_at, b.updated_at AS user_updated_at FROM ulasan a INNER JOIN users b ON a.user_id = b.id where a.user_id=${q} ORDER BY a.created_at DESC limit ${limit}`;
   }
   const [result, fields] = await connection.execute(query);
   const transformResultData = transformData(result);
