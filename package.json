@@ -7,6 +7,7 @@
     "production": "node ./bin/www"
   },
   "dependencies": {
+    "base64-img": "^1.0.4",
     "bcrypt": "^5.1.1",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
@@ -14,6 +15,7 @@
     "dotenv": "^16.3.1",
     "express": "~4.16.1",
     "fastest-validator": "^1.17.0",
+    "is-base64": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "~1.9.1",
     "mysql2": "^3.6.5",

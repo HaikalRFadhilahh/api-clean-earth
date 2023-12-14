@@ -5,6 +5,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../database/connection");
 const v = new Validator();
+const checkAuth = require("../middleware/CheckAuth");
+const isBase64 = require("is-base64");
+const base64Img = require("base64-img");
+const fs = require("fs");
 const { SALT, JWT_SECRET, JWT_ACCESS_TOKEN_EXPIRED } = process.env;
 
 /* Post Request Method */
@@ -40,19 +44,9 @@ router.post("/login", async (req, res) => {
       );
 
       if (isValidPass) {
-        const token = jwt.sign(
-          {
-            id: checkUsers.id,
-            nama: checkUsers.nama,
-            email: checkUsers.email,
-            username: checkUsers.username,
-            kontak: checkUsers.kontak,
-          },
-          JWT_SECRET,
-          {
-            expiresIn: JWT_ACCESS_TOKEN_EXPIRED,
-          }
-        );
+        const token = jwt.sign(checkUsers, JWT_SECRET, {
+          expiresIn: JWT_ACCESS_TOKEN_EXPIRED,
+        });
 
         return res.status(200).json({
           status: "success",
@@ -170,6 +164,129 @@ router.post("/validate", async (req, res) => {
         message: "invalid token!",
       });
     }
+  }
+});
+
+router.put("/update", checkAuth, async (req, res) => {
+  const schema = {
+    nama: "string|min:3",
+    username: "string|min:3",
+    email: "email",
+    kontak: "string",
+    password: "string|optional|min:3",
+    img: "string|optional",
+  };
+
+  const validate = v.validate(req.body, schema);
+
+  if (validate.length) {
+    return res.status(400).json({
+      status: "error",
+      message: validate,
+    });
+  }
+
+  /* Validation Data username,email,and kontak */
+  const connection = await pool.getConnection();
+  var [checkUsers, fields] = await connection.execute(
+    `select * from users where ( email='${req.body.email}' or username='${req.body.username}' or kontak='${req.body.kontak}') and id != ${req.dataUser.id}`
+  );
+  connection.release();
+
+  if (
+    (req.body.username != undefined ||
+      req.body.email != undefined ||
+      req.body.kontak != undefined) &&
+    checkUsers.length > 0
+  ) {
+    checkUsers = checkUsers[0];
+
+    if (checkUsers.username == req.body.username) {
+      return res.status(409).json({
+        status: "error",
+        message: "Username Sudah Di Gunakan Harap Ganti Username Yang Lain",
+      });
+    } else if (checkUsers.email == req.body.email) {
+      return res.status(409).json({
+        status: "error",
+        message: "Email Sudah Di Gunakan Harap Ganti Email Yang Lain",
+      });
+    } else if (checkUsers.kontak == req.body.kontak) {
+      return res.status(409).json({
+        status: "error",
+        message: "Kontak Sudah Di Gunakan Harap Ganti Kontak Yang Lain",
+      });
+    }
+  }
+
+  /* updating data users */
+  const conn = await pool.getConnection();
+  if (req.body.image == null || req.body.image == undefined) {
+    var query;
+    if (req.body.password == null || req.body.password == undefined) {
+      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}' where id = ${req.dataUser.id}`;
+    } else {
+      const password = await bcrypt.hash(req.body.password, parseInt(SALT));
+      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}' where id = ${req.dataUser.id}`;
+    }
+    await conn.execute(query);
+    const [d, f] = await connection.execute(
+      `select * from users where id=${req.dataUser.id}`
+    );
+    conn.release();
+    const token = jwt.sign(d[0], JWT_SECRET, {
+      expiresIn: JWT_ACCESS_TOKEN_EXPIRED,
+    });
+    return res.status(200).json({
+      status: "success",
+      message: "success edit data users",
+      token: token,
+    });
+  } else {
+    if (!isBase64(req.body.image, { mimeRequired: true })) {
+      return res.status(400).json({
+        status: "error",
+        message: "invalid image type ",
+      });
+    }
+
+    base64Img.img(
+      req.body.image,
+      "./public/images",
+      Date.now(),
+      async (err, filepath) => {
+        if (err) {
+          return res.status(400).json({
+            status: "error",
+            message: err.message,
+          });
+        }
+
+        const filename = filepath.split("/").pop();
+
+        var query;
+        if (req.body.password == null || req.body.password == undefined) {
+          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',image='/images/${filename}' where id = ${req.dataUser.id}`;
+        } else {
+          const password = await bcrypt.hash(req.body.password, parseInt(SALT));
+          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}',image='/images/${filename}' where id = ${req.dataUser.id}`;
+        }
+
+        await conn.execute(query);
+        const [d, f] = await connection.execute(
+          `select * from users where id=${req.dataUser.id}`
+        );
+        conn.release();
+        const token = jwt.sign(d[0], JWT_SECRET, {
+          expiresIn: JWT_ACCESS_TOKEN_EXPIRED,
+        });
+        return res.status(200).json({
+          status: "success",
+          message: "success edit data users",
+          token: token,
+        });
+      }
+    );
   }
 });
 module.exports = router;
