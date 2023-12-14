@@ -12,7 +12,7 @@ const v = new Validator();
 /* GET Postingan Route */
 
 /* POST Postingan Route */
-router.post("/", checkAuth, async (req, res) => {
+router.post("/", async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const connection = await pool.getConnection();
 
