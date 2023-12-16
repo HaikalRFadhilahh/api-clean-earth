@@ -74,7 +74,6 @@ router.post("/create", checkAuth, async (req, res) => {
 
   try {
     const connection = await pool.getConnection();
-    console.log(req.dataUser);
     const isi = req.body.isi;
     const sluq = isi.substring(0, 80) + "...";
     const [data, fields] = await connection.execute(
@@ -103,7 +102,6 @@ router.post("/create", checkAuth, async (req, res) => {
 
 router.delete("/delete/:id", checkAuth, async (req, res) => {
   const id = parseInt(req.params.id);
-  console.log(id);
   const schema = {
     id: "number|min:1",
   };
@@ -162,7 +160,6 @@ router.put("/update/:id", checkAuth, async (req, res) => {
       });
     }
     dataPost = dataPost[0];
-    console.log(dataPost);
     const isi = req.body.isi;
     const sluq = isi.substring(0, 80) + "...";
     await connection.execute(

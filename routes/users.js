@@ -117,7 +117,6 @@ router.post("/register", async (req, res) => {
   } else {
     try {
       req.body.password = await bcrypt.hash(req.body.password, parseInt(SALT));
-      console.log(req.body);
       const [result, fields] = await connection.execute(
         `insert into users (nama,username,email,role,kontak,password) values ('${req.body.nama}','${req.body.username}','${req.body.email}','${req.body.role}','${req.body.kontak}','${req.body.password}')`
       );
@@ -292,7 +291,6 @@ router.put("/update", checkAuth, async (req, res) => {
 
 router.post("/getusers", checkAuth, async (req, res) => {
   const limit = parseInt(req.params.limit) || undefined;
-  console.log(limit);
   var query = `select id,nama,username,email,role,kontak,image,created_at,updated_at from users`;
 
   if (limit != undefined && limit != 0 && limit != null) {
