@@ -57,6 +57,7 @@ router.post("/", checkAuth, async (req, res) => {
 router.post("/create", checkAuth, async (req, res) => {
   const schema = {
     user_id: "number|min:1",
+    waktu: "string",
     jenis_sampah: "string|min:3|max:255",
     jumlah: "number|min:1",
     nominal: "number|min:500",
@@ -94,7 +95,6 @@ router.post("/create", checkAuth, async (req, res) => {
     return res.status(500).json({
       status: "error",
       message: "server error",
-      data: error,
     });
   }
 });
@@ -148,4 +148,89 @@ router.post("/:id", checkAuth, async (req, res) => {
   }
 });
 
+router.delete("/delete/:id", checkAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const connection = await pool.getConnection();
+    await connection.execute(`delete from setorsampah where id=${id}`);
+    connection.release();
+    return res.status(200).json({
+      status: "success",
+      message: `Data setor sampah id ${id} has success deleted`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
+router.put("/update/:id", checkAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  const schema = {
+    user_id: "number|min:1",
+    waktu: "string",
+    jenis_sampah: "string|min:3|max:255",
+    jumlah: "number|min:1",
+    nominal: "number|min:500",
+  };
+
+  const validate = v.validate(req.body, schema);
+
+  const conn = await pool.getConnection();
+  var [checkData, fields] = await conn.execute(
+    `select * from setorsampah where id=${id}`
+  );
+  var [checkUsers, fields] = await conn.query(
+    `select * from users where id=${req.body.user_id}`
+  );
+  checkUsers = checkUsers[0];
+  conn.release();
+
+  checkData = checkData[0];
+
+  if (!checkData) {
+    return res.status(404).json({
+      status: "error",
+      message: `Data Setor Sampah For id ${id} not found`,
+    });
+  } else if (validate.length) {
+    return res.status(400).json({
+      status: "error",
+      message: validate,
+    });
+  } else if (!checkUsers) {
+    return res.status(400).json({
+      status: "error",
+      message: `Users For id ${req.body.user_id} not found`,
+    });
+  }
+
+  try {
+    const request = req.body;
+    const connection = await pool.getConnection();
+    await connection.execute(
+      `update setorsampah set user_id=${request.user_id},waktu='${request.waktu}',jenis_sampah='${request.jenis_sampah}',jumlah=${request.jumlah},nominal=${request.nominal} where id=${id}`
+    );
+    connection.release();
+    return res.status(200).json({
+      status: "success",
+      message: `Edit Data Setor Sampah For id ${id} has ben edited`,
+      data: {
+        id: id,
+        user_id: request.user_id,
+        waktu: request.waktu,
+        jenis_sampah: request.jenis_sampah,
+        jumlah: request.jumlah,
+        nominal: request.nominal,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
 module.exports = router;
