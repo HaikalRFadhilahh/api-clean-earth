@@ -9,6 +9,7 @@ const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const ulasanRouter = require("./routes/ulasan");
 const postinganRouter = require("./routes/postingan");
+const setorSampahRouter = require("./routes/setorSampah");
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/ulasan", ulasanRouter);
 app.use("/postingan", postinganRouter);
+app.use("/setorsampah", setorSampahRouter);
 
 module.exports = app;

@@ -4,7 +4,6 @@ const router = express.Router();
 const checkAuth = require("../middleware/CheckAuth");
 const Validator = require("fastest-validator");
 const pool = require("../database/connection");
-const { route } = require(".");
 
 /* Declare Class */
 const v = new Validator();
