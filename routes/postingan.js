@@ -186,4 +186,51 @@ router.put("/update/:id", checkAuth, async (req, res) => {
   }
 });
 
+router.post("/:id", checkAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  try {
+    const connection = await pool.getConnection();
+    var [result, fields] = await connection.execute(
+      `select p.*,u.*,p.id as id,u.id as user_pk_id,p.created_at as created_at,p.updated_at as updated_at,u.created_at as user_created_at,u.updated_at as user_updated_at from postingan p inner join users u on p.user_id = u.id where p.id = ${id}`
+    );
+    connection.release();
+    result = result[0];
+    if (!result) {
+      return res.status(404).json({
+        status: "error",
+        message: "data postingan not found",
+      });
+    } else {
+      return res.status(200).json({
+        status: "success",
+        message: "data postingan",
+        data: {
+          id: result.id,
+          judul: result.judul,
+          slug: result.slug,
+          isi: result.isi,
+          created_at: result.created_at,
+          updated_at: result.updated_at,
+          users: {
+            id: result.user_pk_id,
+            nama: result.nama,
+            username: result.username,
+            email: result.email,
+            role: result.role,
+            kontak: result.kontak,
+            created_at: result.user_created_at,
+            updated_at: result.user_created_at,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
 module.exports = router;

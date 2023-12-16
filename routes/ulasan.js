@@ -142,6 +142,7 @@ function transformData(inputData) {
         username: item.username,
         email: item.email,
         kontak: item.kontak,
+        image: item.image,
         created_at: item.user_created_at,
         updated_at: item.user_updated_at,
       },
