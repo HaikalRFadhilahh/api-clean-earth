@@ -99,55 +99,6 @@ router.post("/create", checkAuth, async (req, res) => {
   }
 });
 
-router.post("/:id", checkAuth, async (req, res) => {
-  const id = parseInt(req.params.id);
-  try {
-    const connection = await pool.getConnection();
-    const [result, fields] = await connection.execute(
-      `select a.*,b.*,a.id as id,a.created_at as created_at,a.updated_at as updated_at,b.id as user_pk_id,b.created_at as user_created_at,b.updated_at as user_updated_at from setorsampah a inner join users b on a.user_id = b.id where a.id = ${id}`
-    );
-    connection.release();
-    const data = result[0];
-    if (data) {
-      return res.status(200).json({
-        status: "success",
-        message: "fetch data users",
-        data: {
-          id: data.id,
-          user_id: data.user_id,
-          waktu: data.waktu,
-          jenis_sampah: data.jenis_sampah,
-          jumlah: data.jumlah,
-          nominal: data.nominal,
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-          users: {
-            id: data.user_pk_id,
-            nama: data.nama,
-            username: data.username,
-            email: data.email,
-            role: data.role,
-            kontak: data.kontak,
-            image: data.image,
-            created_at: data.user_created_at,
-            updated_at: data.user_updated_at,
-          },
-        },
-      });
-    } else {
-      return res.status(404).json({
-        status: "error",
-        message: "data setor sampah not found",
-      });
-    }
-  } catch (error) {
-    return res.status(500).json({
-      status: "error",
-      message: "server error",
-    });
-  }
-});
-
 router.delete("/delete/:id", checkAuth, async (req, res) => {
   const id = parseInt(req.params.id);
   try {
@@ -226,6 +177,104 @@ router.put("/update/:id", checkAuth, async (req, res) => {
         nominal: request.nominal,
       },
     });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
+router.post("/stats", checkAuth, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [data, fields] = await connection.execute(
+      `SELECT MONTHNAME(waktu) AS bulan,MONTH(waktu) AS angka_bulan,SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE())  GROUP BY MONTH(waktu),waktu ORDER BY MONTH(waktu);`
+    );
+    const [d, f] = await connection.execute(
+      `select IF(SUM(nominal) > 0, SUM(nominal),0) as 'jumlah_nominal' from setorsampah where YEAR(waktu) = YEAR(CURRENT_DATE())`
+    );
+    connection.release();
+    return res.status(200).json({
+      status: "success",
+      message: "stats setor sampah",
+      data: data,
+      jumlah_nominal: d[0].jumlah_nominal,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
+router.post("/stats/:id", checkAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const connection = await pool.getConnection();
+    const [data, fields] = await connection.execute(
+      `SELECT MONTHNAME(waktu) AS bulan,MONTH(waktu) AS angka_bulan,SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE()) and user_id=${id} GROUP BY MONTH(waktu),waktu ORDER BY MONTH(waktu);`
+    );
+    const [d, f] = await connection.execute(
+      `select IF(SUM(nominal) > 0, SUM(nominal),0) as 'jumlah_nominal' from setorsampah where user_id = ${id} and YEAR(waktu) = YEAR(CURRENT_DATE())`
+    );
+    connection.release();
+    return res.status(200).json({
+      status: "success",
+      message: "stats setor sampah",
+      data: data,
+      jumlah_nominal: d[0].jumlah_nominal,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
+router.post("/:id", checkAuth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const connection = await pool.getConnection();
+    const [result, fields] = await connection.execute(
+      `select a.*,b.*,a.id as id,a.created_at as created_at,a.updated_at as updated_at,b.id as user_pk_id,b.created_at as user_created_at,b.updated_at as user_updated_at from setorsampah a inner join users b on a.user_id = b.id where a.id = ${id}`
+    );
+    connection.release();
+    const data = result[0];
+    if (data) {
+      return res.status(200).json({
+        status: "success",
+        message: "fetch data users",
+        data: {
+          id: data.id,
+          user_id: data.user_id,
+          waktu: data.waktu,
+          jenis_sampah: data.jenis_sampah,
+          jumlah: data.jumlah,
+          nominal: data.nominal,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+          users: {
+            id: data.user_pk_id,
+            nama: data.nama,
+            username: data.username,
+            email: data.email,
+            role: data.role,
+            kontak: data.kontak,
+            image: data.image,
+            created_at: data.user_created_at,
+            updated_at: data.user_updated_at,
+          },
+        },
+      });
+    } else {
+      return res.status(404).json({
+        status: "error",
+        message: "data setor sampah not found",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       status: "error",
