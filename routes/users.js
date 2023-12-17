@@ -174,6 +174,12 @@ router.put("/update", checkAuth, async (req, res) => {
     kontak: "string",
     password: "string|optional|min:3",
     img: "string|optional",
+    usia: "number|min:5",
+    alamat: "string|min:5",
+    gender: {
+      type: "enum",
+      values: ["L", "P"],
+    },
   };
 
   const validate = v.validate(req.body, schema);
@@ -223,10 +229,10 @@ router.put("/update", checkAuth, async (req, res) => {
   if (req.body.image == null || req.body.image == undefined) {
     var query;
     if (req.body.password == null || req.body.password == undefined) {
-      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}' where id = ${req.dataUser.id}`;
+      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',usia=${req.body.usia},alamat='${req.body.alamat}',gender='${req.body.gender}' where id = ${req.dataUser.id}`;
     } else {
       const password = await bcrypt.hash(req.body.password, parseInt(SALT));
-      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}' where id = ${req.dataUser.id}`;
+      query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}',usia=${req.body.usia},alamat='${req.body.alamat}',gender='${req.body.gender}' where id = ${req.dataUser.id}`;
     }
     await conn.execute(query);
     const [d, f] = await connection.execute(
@@ -249,6 +255,28 @@ router.put("/update", checkAuth, async (req, res) => {
       });
     }
 
+    const check = await pool.getConnection();
+    var [d, f] = await check.execute(
+      `select * from users where id=${req.dataUser.id}`
+    );
+    check.release();
+
+    d = d[0];
+    if (d.image != null) {
+      fs.access(`./public${d.image}`, fs.constants.F_OK, (err) => {
+        if (!err) {
+          fs.unlink(`./public${d.image}`, async (err) => {
+            if (err) {
+              return res.status(500).json({
+                status: "error",
+                message: "server error",
+              });
+            }
+          });
+        }
+      });
+    }
+
     base64Img.img(
       req.body.image,
       "./public/images",
@@ -265,10 +293,10 @@ router.put("/update", checkAuth, async (req, res) => {
 
         var query;
         if (req.body.password == null || req.body.password == undefined) {
-          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',image='/images/${filename}' where id = ${req.dataUser.id}`;
+          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',image='/images/${filename}',usia=${req.body.usia},alamat='${req.body.alamat}',gender='${req.body.gender}' where id = ${req.dataUser.id}`;
         } else {
           const password = await bcrypt.hash(req.body.password, parseInt(SALT));
-          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}',image='/images/${filename}' where id = ${req.dataUser.id}`;
+          query = `update users set nama='${req.body.nama}',username='${req.body.username}',email='${req.body.email}',kontak='${req.body.kontak}',password='${password}',image='/images/${filename}',usia=${req.body.usia},alamat='${req.body.alamat}',gender='${req.body.gender}' where id = ${req.dataUser.id}`;
         }
 
         await conn.execute(query);
