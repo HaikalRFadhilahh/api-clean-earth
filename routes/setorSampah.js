@@ -189,7 +189,7 @@ router.post("/stats", checkAuth, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [data, fields] = await connection.execute(
-      `SELECT MONTHNAME(waktu) AS bulan,MONTH(waktu) AS angka_bulan,SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE())  GROUP BY MONTH(waktu),waktu ORDER BY MONTH(waktu);`
+      `SELECT MONTHNAME(waktu) AS bulan, MONTH(waktu) AS angka_bulan, SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE()) GROUP BY bulan, angka_bulan ORDER BY angka_bulan asc`
     );
     const [d, f] = await connection.execute(
       `select IF(SUM(nominal) > 0, SUM(nominal),0) as 'jumlah_nominal' from setorsampah where YEAR(waktu) = YEAR(CURRENT_DATE())`
@@ -214,7 +214,7 @@ router.post("/stats/:id", checkAuth, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [data, fields] = await connection.execute(
-      `SELECT MONTHNAME(waktu) AS bulan,MONTH(waktu) AS angka_bulan,SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE()) and user_id=${id} GROUP BY MONTH(waktu),waktu ORDER BY MONTH(waktu);`
+      `SELECT MONTHNAME(waktu) AS bulan, MONTH(waktu) AS angka_bulan, SUM(jumlah) AS jumlah_sampah FROM setorsampah WHERE YEAR(waktu) = YEAR(CURRENT_DATE()) and user_id = ${id} GROUP BY bulan, angka_bulan ORDER BY angka_bulan ASC`
     );
     const [d, f] = await connection.execute(
       `select IF(SUM(nominal) > 0, SUM(nominal),0) as 'jumlah_nominal' from setorsampah where user_id = ${id} and YEAR(waktu) = YEAR(CURRENT_DATE())`
