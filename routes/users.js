@@ -317,6 +317,32 @@ router.put("/update", checkAuth, async (req, res) => {
   }
 });
 
+router.delete("/delete/:id", checkAuth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id) || undefined;
+    console.log(id);
+    if (id == NaN || id == undefined) {
+      return res.status(400).json({
+        status: "error",
+        message: "Id User Must Be Integer",
+      });
+    } else {
+      const connection = await pool.getConnection();
+      await connection.execute(`delete from users where id=${id}`);
+      connection.release();
+      return res.status(200).json({
+        status: "success",
+        message: `User With Id ${id} Has Success Deleted`,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "server error",
+    });
+  }
+});
+
 router.post("/getusers", checkAuth, async (req, res) => {
   const limit = parseInt(req.query.limit) || undefined;
   var query = `select id,nama,username,email,alamat,role,kontak,image,created_at,updated_at from users`;
