@@ -318,11 +318,11 @@ router.put("/update", checkAuth, async (req, res) => {
 });
 
 router.post("/getusers", checkAuth, async (req, res) => {
-  const limit = parseInt(req.params.limit) || undefined;
-  var query = `select id,nama,username,email,role,kontak,image,created_at,updated_at from users`;
+  const limit = parseInt(req.query.limit) || undefined;
+  var query = `select id,nama,username,email,alamat,role,kontak,image,created_at,updated_at from users`;
 
   if (limit != undefined && limit != 0 && limit != null) {
-    query = `select id,nama,username,email,role,kontak,image,created_at,updated_at from users limit ${limit}`;
+    query = `select id,nama,username,email,alamat,role,kontak,image,created_at,updated_at from users limit ${limit}`;
   }
 
   try {
