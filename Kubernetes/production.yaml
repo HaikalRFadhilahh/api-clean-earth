@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cleanearth-be
+  labels:
+    environment: production
+spec:
+  selector:
+    matchLabels:
+      environment: production
+  template:
+    metadata:
+      labels:
+        environment: production
+    spec:
+      containers:
+        - name: cleanearth-be
+          image: ghcr.io/haikalrfadhilahh/apicleanearth:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2048Mi"
+            requests:
+              cpu: "1"
+              memory: "1024Mi"
+          env:
+            - name: DB_HOST
+              value: "your host of database provider"
+            - name: DB_NAME
+              value: clean_earth
+            - name: DB_USERNAME
+              value: "your database username"
+            - name: DB_PASSWORD
+              value: "your db password"
+            - name: SALT
+              value: "10"
+            - name: JWT_SECRET
+              value: "your key JWT Secret"
+            - name: JWT_ACCESS_TOKEN_EXPIRED
+              value: 1h
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cleanearth-be-service
+  labels:
+    environment: production
+spec:
+  selector:
+    environment: production
+  ports:
+    - port: 3030
+      protocol: TCP
+      targetPort: 3000
